@@ -10,8 +10,8 @@
 	 * Heavily inspired by http://xcache.lighttpd.net/wiki/XcacheApi#aSimpleOOwrapper.
 	 *
 	 * @todo Implement custom error handling with throw.
-	 * Implement expiration time.
 	 * Find more efficient way of storing data.
+	 * Implement cache purging.
 	 *
 	 */
 
@@ -28,6 +28,11 @@
 		public static $cacheDir;
 
 		/**
+		 * The default expiration time, in seconds, for cached variables.
+		 */
+		public static $expirationTime;
+
+		/**
 		 * __construct
 		 *
 		 * @access private
@@ -35,7 +40,7 @@
 		private function __construct()
 		{
 			// Checks if directory is set
-			if ( empty(self::$cacheDir) )
+			if ( empty( self::$cacheDir ) )
 				self::$cacheDir = 'cache/';
 
 			// Trim the path
@@ -53,6 +58,10 @@
 			// Checks if directory is writeable
 			if ( !is_writeable( self::$cacheDir ) )
 				exit( 'Directory is not writeable!' );
+
+			// Checks whether an expiration time has been set
+			if ( !isset( self::$expirationTime ) )
+				self::$expirationTime = 3600;
 		}
 
 		public final function __clone()
@@ -92,7 +101,15 @@
 
 			// Checks if the variable is already set
 			if ( isset( $this->{$name} ) )
-				return false; // return false for now, will be exception later
+			{
+				// Checks if the variable has expired
+				if ( $this->hasExpired( $name ) )
+				{
+					unset( $this->{$name} );
+				}
+				else
+					return false;
+			}
 
 			// Serialize data
 			$value = base64_encode( serialize( $value ) );
@@ -134,6 +151,13 @@
 			if ( !isset( $this->{$name} ) )
 				return false;
 
+			// Checks if the variable has expired
+			if ( $this->hasExpired( $name ) )
+			{
+				unset( $this->{$name} );
+				return false;
+			}
+
 			$path = self::$cacheDir . $this->encryptName( $name );
 
 			// Write file contents to variable
@@ -157,13 +181,13 @@
 		}
 
 		/**
-		* isset
+		* checkSet
 		* 
 		* @param mixed $name 
 		* @access public
 		* @return bool Whether or not the variable is stored in the cache.
 		*/
-		public function check_set( $name )
+		public function checkSet( $name )
 		{
 			$path = self::$cacheDir . $this->encryptName( $name );
 
@@ -181,7 +205,7 @@
 		*/
 		public function __isset( $name )
 		{
-			return $this->check_set( $name );
+			return $this->checkSet( $name );
 		}
 
 		/**
@@ -213,6 +237,38 @@
 		{
 			return $this->delete( $name );
 		}
+
+		/**
+		 * hasExpired
+		 *
+		 * Checks whether a certain cached variable has expired or not.
+		 *
+		 * @param string $name
+		 * @access private
+		 * @return bool Whether it has expired or not.
+		 */
+		private function hasExpired( $name )
+		{
+			// Checks if cache entry exists
+			if ( !isset( $this->{$name} ) )
+				return false;
+
+			$path = self::$cacheDir . $this->encryptName( $name );
+
+			if ( !( $cachestat = stat( $path ) ) )
+				exit( 'Last modification time for "'.$name.'" could not be parsed!' );
+
+			// If current time is between last modification time and last modification time plus expiration time, it has not expired
+			if (
+					$cachestat['mtime'] <= time()
+					&&
+					time() < ( $cachestat['mtime'] + self::$expirationTime )
+				)
+				return false;
+			else
+				return true;
+		}
+		
 
 		/**
 		 * encrpytName
