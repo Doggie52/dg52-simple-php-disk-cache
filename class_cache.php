@@ -77,7 +77,7 @@
 		}
 
 		/**
-		* __set
+		* store
 		*
 		* Stores an entry in the caching filesystem and returns whether it was successfully done or not.
 		* 
@@ -86,7 +86,7 @@
 		* @access public
 		* @return bool Whether cache was successfully stored (errors could be if duplicate entry was found).
 		*/
-		public function __set( $name, $value )
+		public function store( $name, $value )
 		{
 			$name = $this->standardizeName( $name );
 
@@ -107,7 +107,20 @@
 		}
 
 		/**
-		* __get
+		* __set
+		*
+		* 
+		* @param mixed $name 
+		* @param mixed $value 
+		* @access public
+		*/
+		public function __set( $name, $value )
+		{
+			return $this->store( $name, $value );
+		}
+
+		/**
+		* get
 		*
 		* Fetches an entry in the caching filesystem, returning either the contents or FALSE if there was nothing found.
 		* 
@@ -115,7 +128,7 @@
 		* @access public
 		* @return $contents Contents of the cached variable, false on failure.
 		*/
-		public function __get( $name )
+		public function get( $name )
 		{
 			// Checks if the variable is set
 			if ( !isset( $this->{$name} ) )
@@ -132,13 +145,25 @@
 		}
 
 		/**
-		* __isset 
+		* __get
+		*
+		* 
+		* @param mixed $name 
+		* @access public
+		*/
+		public function __get( $name )
+		{
+			return $this->get( $name );
+		}
+
+		/**
+		* isset
 		* 
 		* @param mixed $name 
 		* @access public
 		* @return bool Whether or not the variable is stored in the cache.
 		*/
-		public function __isset( $name )
+		public function check_set( $name )
 		{
 			$path = self::$cacheDir . $this->encryptName( $name );
 
@@ -146,6 +171,31 @@
 				return true;
 			else
 				return false;
+		}
+
+		/**
+		* __isset 
+		* 
+		* @param mixed $name 
+		* @access public
+		*/
+		public function __isset( $name )
+		{
+			return $this->check_set( $name );
+		}
+
+		/**
+		* delete
+		* 
+		* @param mixed $name 
+		* @access public
+		* @return void
+		*/
+		public function delete( $name )
+		{
+			$path = self::$cacheDir . $this->encryptName( $name );
+
+			unlink( $path );
 		}
 
 		/**
@@ -157,9 +207,7 @@
 		*/
 		public function __unset( $name )
 		{
-			$path = self::$cacheDir . $this->encryptName( $name );
-
-			unlink( $path );
+			return $this->delete( $name );
 		}
 
 		/**
