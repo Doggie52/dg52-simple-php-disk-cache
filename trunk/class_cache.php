@@ -290,7 +290,7 @@
 		private function encryptName( $name )
 		{
 			// Hashes and returns on success
-			if ( $encrypt = md5( $name ) )
+			if ( $encrypt = dechex( crc32( $name ) ) )
 				return $encrypt;
 			else
 				return false;
