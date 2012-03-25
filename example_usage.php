@@ -18,16 +18,15 @@
 
 	// Instantiate cache class
 	$cache = DiskCache::getInstance();
+	DiskCache::$expirationTime = 5;
 	
 	$cache->foo = "foo!";
 	$cache->bar = "bar!";
+	$cache->{'test test'} = "lol!";
+	$cache->array = array( 'one' => 'yes', 'two' => 'no' );
 
 	var_dump( $cache->foo );
 	var_dump( $cache->bar );
-
-	unset( $cache->foo );
-	unset( $cache->bar );
-
-	var_dump( $cache->foo );
-	var_dump( $cache->bar );
+	var_dump( $cache->{'test test'} );
+	var_dump( $cache->array );
 ?>
