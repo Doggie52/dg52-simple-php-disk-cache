@@ -193,6 +193,10 @@
 		*/
 		public function delete( $name )
 		{
+			// Checks if cache entry exists
+			if ( !isset( $this->{$name} ) )
+				return false;
+
 			$path = self::$cacheDir . $this->encryptName( $name );
 
 			unlink( $path );
