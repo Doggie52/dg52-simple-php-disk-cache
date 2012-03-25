@@ -311,7 +311,6 @@
 			// Standardizes the name
 			$name = trim( $name );
 			$name = strtolower( $name );
-			$name = urlencode( $name );
 
 			return $name;
 		}
