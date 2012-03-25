@@ -18,7 +18,7 @@
 	class DiskCache
 	{
 		/**
-		 * Holds the instance of the object.
+		 * Holds the instance of the class.
 		 */
 		private static $instance;
 
@@ -100,12 +100,12 @@
 			$name = $this->standardizeName( $name );
 
 			// Checks if the variable is already set
-			if ( isset( $this->{$name} ) )
+			if ( $this->checkSet( $name ) )
 			{
 				// Checks if the variable has expired
 				if ( $this->hasExpired( $name ) )
 				{
-					unset( $this->{$name} );
+					$this->delete( $name );
 				}
 				else
 					return false;
@@ -147,14 +147,16 @@
 		*/
 		public function get( $name )
 		{
+			$name = $this->standardizeName( $name );
+
 			// Checks if the variable is set
-			if ( !isset( $this->{$name} ) )
+			if ( !$this->checkSet( $name ) )
 				return false;
 
 			// Checks if the variable has expired
 			if ( $this->hasExpired( $name ) )
 			{
-				unset( $this->{$name} );
+				$this->delete( $name );
 				return false;
 			}
 
@@ -189,6 +191,8 @@
 		*/
 		public function checkSet( $name )
 		{
+			$name = $this->standardizeName( $name );
+
 			$path = self::$cacheDir . $this->encryptName( $name );
 
 			if( file_exists( $path ) )
@@ -217,8 +221,10 @@
 		*/
 		public function delete( $name )
 		{
+			$name = $this->standardizeName( $name );
+
 			// Checks if cache entry exists
-			if ( !isset( $this->{$name} ) )
+			if ( !$this->checkSet( $name ) )
 				return false;
 
 			$path = self::$cacheDir . $this->encryptName( $name );
@@ -249,8 +255,10 @@
 		 */
 		private function hasExpired( $name )
 		{
+			$name = $this->standardizeName( $name );
+
 			// Checks if cache entry exists
-			if ( !isset( $this->{$name} ) )
+			if ( !$this->checkSet( $name ) )
 				return false;
 
 			$path = self::$cacheDir . $this->encryptName( $name );
@@ -281,19 +289,18 @@
 		 */
 		private function encryptName( $name )
 		{
-			// Checks whether the input exists or if it's null
-			if ( !isset($name) || $name == null )
-				return false;
-
 			// Hashes and returns on success
 			if ( $encrypt = md5( $name ) )
 				return $encrypt;
+			else
+				return false;
 		}
 
 		/**
 		 * standardizeName
 		 *
 		 * Takes an input and standardizes it, to avoid confusing duplicates.
+		 * Note that yes, this function is sometimes run twice on strings -- this is not a problem as it will then just return the same string.
 		 *
 		 * @param string $name
 		 * @access private
@@ -301,10 +308,6 @@
 		 */
 		private function standardizeName( $name )
 		{
-			// Checks whether the input exists or if it's null
-			if ( !isset($name) || $name == null )
-				return false;
-
 			// Standardizes the name
 			$name = trim( $name );
 			$name = strtolower( $name );
