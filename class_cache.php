@@ -288,11 +288,12 @@
 		{
 			$name = $this->standardizeName( $name );
 
-			// Checks if cache entry exists
-			if ( !$this->checkSet( $name ) )
-				return false;
-
 			$path = $this->path( $name );
+
+			// Checks if cache entry exists
+			// Let's not use the checkSet here, but we need to figure out a better method
+			if ( !file_exists( $name ) )
+				return false;
 
 			if ( !( $cachestat = stat( $path ) ) )
 				exit( 'Last modification time for "'.$name.'" could not be parsed!' );
