@@ -69,6 +69,7 @@
 		 * __clone
 		 *
 		 * Prevents cloning.
+		 *
 		 * @access public
 		 * @final
 		 */
@@ -81,6 +82,7 @@
 		 * __wakeup
 		 *
 		 * Prevents unserializing.
+		 *
 		 * @access public
 		 * @final
 		 */
@@ -90,7 +92,9 @@
 		}
 
 		/**
-		* getInstance 
+		* getInstance
+		*
+		* Enfores the Singleton pattern, returns the one and only instance of itself, stored in itself.
 		* 
 		* @static
 		* @access public
@@ -134,7 +138,7 @@
 			// Serialize data
 			$value = base64_encode( serialize( $value ) );
 
-			$path = self::$cacheDir . $this->encryptName( $name );
+			$path = $this->path( $name );
 
 			// Write contents to path
 			if ( file_put_contents( $path, $value, LOCK_EX ) !== false )
@@ -180,7 +184,7 @@
 				return false;
 			}
 
-			$path = self::$cacheDir . $this->encryptName( $name );
+			$path = $this->path( $name );
 
 			// Write file contents to variable
 			if ( !( $contents = file_get_contents( $path ) ) )
@@ -213,7 +217,7 @@
 		{
 			$name = $this->standardizeName( $name );
 
-			$path = self::$cacheDir . $this->encryptName( $name );
+			$path = $this->path( $name );
 
 			if( file_exists( $path ) )
 				return true;
@@ -247,7 +251,7 @@
 			if ( !$this->checkSet( $name ) )
 				return false;
 
-			$path = self::$cacheDir . $this->encryptName( $name );
+			$path = $this->path( $name );
 
 			unlink( $path );
 		}
@@ -281,7 +285,7 @@
 			if ( !$this->checkSet( $name ) )
 				return false;
 
-			$path = self::$cacheDir . $this->encryptName( $name );
+			$path = $this->path( $name );
 
 			if ( !( $cachestat = stat( $path ) ) )
 				exit( 'Last modification time for "'.$name.'" could not be parsed!' );
@@ -333,6 +337,22 @@
 			$name = strtolower( $name );
 
 			return $name;
+		}
+
+		/**
+		 * path
+		 *
+		 * Takes an input and returns the path to the cached variable with that $name.
+		 *
+		 * @param string $name
+		 * @access private
+		 * @return string $path The path to the cached variable.
+		 */
+		private function path( $name )
+		{
+			$path = self::$cacheDir . $this->encryptName( $name );
+
+			return $path;
 		}
 	}
 
