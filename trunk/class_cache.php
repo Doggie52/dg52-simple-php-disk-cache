@@ -12,6 +12,7 @@
 	 * @todo Implement custom error handling with throw.
 	 * Find more efficient way of storing data.
 	 * Implement cache purging.
+	 * Implement individual expiration times for different variables.
 	 *
 	 */
 
@@ -64,10 +65,29 @@
 				self::$expirationTime = 3600;
 		}
 
+		/**
+		 * __clone
+		 *
+		 * Prevents cloning.
+		 * @access public
+		 * @final
+		 */
 		public final function __clone()
 		{
 			throw new BadMethodCallException("Cloning is not allowed");
-		} 
+		}
+
+		/**
+		 * __wakeup
+		 *
+		 * Prevents unserializing.
+		 * @access public
+		 * @final
+		 */
+		public final function __wakeup()
+		{
+			throw new BadMethodCallException("Unserializing is not allowed");
+		}
 
 		/**
 		* getInstance 
