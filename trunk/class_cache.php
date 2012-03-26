@@ -215,6 +215,13 @@
 		*/
 		public function checkSet( $name )
 		{
+			// Checks if the variable has expired
+			if ( $this->hasExpired( $name ) )
+			{
+				$this->delete( $name );
+				return false;
+			}
+
 			$name = $this->standardizeName( $name );
 
 			$path = $this->path( $name );
