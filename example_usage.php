@@ -14,7 +14,7 @@
 	ini_set('display_errors', 1); 
 	error_reporting(E_ALL);
 
-	include( 'class_cache.php' );
+	include( 'class.DiskCache.php' );
 
 	// Instantiate cache class
 	$cache = DiskCache::getInstance();

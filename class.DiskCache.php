@@ -7,31 +7,50 @@
 	 * @email: doggie52@gmail.com
 	 * @url: www.douglasstridsberg.com
 	 *
-	 * Heavily inspired by http://xcache.lighttpd.net/wiki/XcacheApi#aSimpleOOwrapper.
+	 * Main class file. Heavily inspired by http://xcache.lighttpd.net/wiki/XcacheApi#aSimpleOOwrapper.
 	 *
-	 * @todo Implement custom error handling with throw.
-	 * Find more efficient way of storing data.
-	 * Implement cache purging.
-	 * Implement individual expiration times for different variables.
-	 *
+	 * @todo Find more efficient way of storing data.
+	 * @todo Implement cache purging.
+	 * @todo Implement individual expiration times for different variables.
 	 */
 
+	/**
+	 * DiskCache
+	 *
+	 * @package diskcache
+	 */
 	class DiskCache
 	{
 		/**
 		 * Holds the instance of the class.
+		 *
+		 * @var object $instace
 		 */
 		private static $instance;
 
 		/**
 		 * The directory in which to cache files, relative to the script itself.
+		 *
+		 * @var string $cacheDir
 		 */
 		public static $cacheDir;
 
 		/**
 		 * The default expiration time, in seconds, for cached variables.
+		 *
+		 * @var int $expirationTime
 		 */
 		public static $expirationTime;
+
+		/**
+		 * __autoload()
+		 *
+		 * @param string $class_name
+		 */
+		function __autoload( $class_name )
+		{
+			include( 'class.' . $class_name . '.php' );
+		}
 
 		/**
 		 * __construct
@@ -53,12 +72,12 @@
 
 			// Check for existance of directory, tries to create if non-existant
 			if ( !is_dir( self::$cacheDir ) )
-				if( !mkdir( self::$cacheDir, 0755 ) )
-					exit( 'Directory does not exist and could not be created!' );
+				if ( !mkdir( self::$cacheDir, 0755 ) )
+					throw new CacheException( 'Directory does not exist and could not be created!' );
 
 			// Checks if directory is writeable
 			if ( !is_writeable( self::$cacheDir ) )
-				exit( 'Directory is not writeable!' );
+				throw new CacheException( 'Directory is not writeable!' );
 
 			// Checks whether an expiration time has been set
 			if ( !isset( self::$expirationTime ) )
@@ -75,7 +94,7 @@
 		 */
 		public final function __clone()
 		{
-			throw new BadMethodCallException("Cloning is not allowed");
+			throw new BadMethodCallException( "Cloning is not allowed" );
 		}
 
 		/**
@@ -88,49 +107,46 @@
 		 */
 		public final function __wakeup()
 		{
-			throw new BadMethodCallException("Unserializing is not allowed");
+			throw new BadMethodCallException( "Unserializing is not allowed" );
 		}
 
 		/**
-		* getInstance
-		*
-		* Enfores the Singleton pattern, returns the one and only instance of itself, stored in itself.
-		* 
-		* @static
-		* @access public
-		* @return object DiskCache instance.
-		*/
-		public static function getInstance() 
+		 * getInstance
+		 *
+		 * Enfores the Singleton pattern, returns the one and only instance of itself, stored in itself.
+		 *
+		 * @static
+		 * @access public
+		 * @return object DiskCache instance.
+		 */
+		public static function getInstance()
 		{
 			// If it doesn't already exist, create itself
 			if ( !( self::$instance instanceof DiskCache ) )
 				self::$instance = new DiskCache;
 
-			return self::$instance; 
+			return self::$instance;
 		}
 
 		/**
-		* store
-		*
-		* Stores an entry in the caching filesystem and returns whether it was successfully done or not.
-		* 
-		* @param mixed $name 
-		* @param mixed $value 
-		* @access public
-		* @return bool Whether cache was successfully stored (errors could be if duplicate entry was found).
-		*/
+		 * store
+		 *
+		 * Stores an entry in the caching filesystem and returns whether it was successfully done or not.
+		 *
+		 * @param mixed $name
+		 * @param mixed $value
+		 * @access public
+		 * @return bool Whether cache was successfully stored (errors could be if duplicate entry was found).
+		 */
 		public function store( $name, $value )
 		{
 			$name = $this->standardizeName( $name );
 
 			// Checks if the variable is already set
-			if ( $this->checkSet( $name ) )
-			{
+			if ( $this->checkSet( $name ) ) {
 				// Checks if the variable has expired
 				if ( $this->hasExpired( $name ) )
-				{
 					$this->delete( $name );
-				}
 				else
 					return false;
 			}
@@ -144,31 +160,31 @@
 			if ( file_put_contents( $path, $value, LOCK_EX ) !== false )
 				return true;
 			else
-				return false;
+				throw new CacheException( 'Cache contents could not be stored!' );
 		}
 
 		/**
-		* __set
-		*
-		* 
-		* @param mixed $name 
-		* @param mixed $value 
-		* @access public
-		*/
+		 * __set
+		 *
+		 *
+		 * @param mixed $name
+		 * @param mixed $value
+		 * @access public
+		 */
 		public function __set( $name, $value )
 		{
 			return $this->store( $name, $value );
 		}
 
 		/**
-		* get
-		*
-		* Fetches an entry in the caching filesystem, returning either the contents or FALSE if there was nothing found.
-		* 
-		* @param mixed $name 
-		* @access public
-		* @return $contents Contents of the cached variable, false on failure.
-		*/
+		 * get
+		 *
+		 * Fetches an entry in the caching filesystem, returning either the contents or FALSE if there was nothing found.
+		 *
+		 * @param mixed $name
+		 * @access public
+		 * @return $contents Contents of the cached variable, false on failure.
+		 */
 		public function get( $name )
 		{
 			$name = $this->standardizeName( $name );
@@ -178,8 +194,7 @@
 				return false;
 
 			// Checks if the variable has expired
-			if ( $this->hasExpired( $name ) )
-			{
+			if ( $this->hasExpired( $name ) ) {
 				$this->delete( $name );
 				return false;
 			}
@@ -195,29 +210,28 @@
 		}
 
 		/**
-		* __get
-		*
-		* 
-		* @param mixed $name 
-		* @access public
-		*/
+		 * __get
+		 *
+		 *
+		 * @param mixed $name
+		 * @access public
+		 */
 		public function __get( $name )
 		{
 			return $this->get( $name );
 		}
 
 		/**
-		* checkSet
-		* 
-		* @param mixed $name 
-		* @access public
-		* @return bool Whether or not the variable is stored in the cache.
-		*/
+		 * checkSet
+		 *
+		 * @param mixed $name
+		 * @access public
+		 * @return bool Whether or not the variable is stored in the cache.
+		 */
 		public function checkSet( $name )
 		{
 			// Checks if the variable has expired
-			if ( $this->hasExpired( $name ) )
-			{
+			if ( $this->hasExpired( $name ) ) {
 				$this->delete( $name );
 				return false;
 			}
@@ -226,30 +240,30 @@
 
 			$path = $this->path( $name );
 
-			if( file_exists( $path ) )
+			if ( file_exists( $path ) )
 				return true;
 			else
 				return false;
 		}
 
 		/**
-		* __isset 
-		* 
-		* @param mixed $name 
-		* @access public
-		*/
+		 * __isset
+		 *
+		 * @param mixed $name
+		 * @access public
+		 */
 		public function __isset( $name )
 		{
 			return $this->checkSet( $name );
 		}
 
 		/**
-		* delete
-		* 
-		* @param mixed $name 
-		* @access public
-		* @return void
-		*/
+		 * delete
+		 *
+		 * @param mixed $name
+		 * @access public
+		 * @return void
+		 */
 		public function delete( $name )
 		{
 			$name = $this->standardizeName( $name );
@@ -260,16 +274,16 @@
 
 			$path = $this->path( $name );
 
-			unlink( $path );
+			if ( !unlink( $path ) )
+				throw new CacheException( 'Cached variable could not be deleted!' );
 		}
 
 		/**
-		* __unset 
-		* 
-		* @param mixed $name 
-		* @access public
-		* @return void
-		*/
+		 * __unset
+		 *
+		 * @param mixed $name
+		 * @access public
+		 */
 		public function __unset( $name )
 		{
 			return $this->delete( $name );
@@ -296,19 +310,19 @@
 				return false;
 
 			if ( !( $cachestat = stat( $path ) ) )
-				exit( 'Last modification time for "'.$name.'" could not be parsed!' );
+				throw new CacheException( 'Last modification time for "' . $name . '" could not be parsed!' );
 
 			// If current time is between last modification time and last modification time plus expiration time, it has not expired
 			if (
-					$cachestat['mtime'] <= time()
-					&&
-					time() < ( $cachestat['mtime'] + self::$expirationTime )
-				)
+				$cachestat['mtime'] <= time()
+				&&
+				time() < ( $cachestat['mtime'] + self::$expirationTime )
+			)
 				return false;
 			else
 				return true;
 		}
-		
+
 
 		/**
 		 * encrpytName
@@ -317,15 +331,13 @@
 		 *
 		 * @param string $name
 		 * @access private
-		 * @return string $encrypt The hashed $name, false on failure.
+		 * @return string $encrypt The hashed $name.
 		 */
 		private function encryptName( $name )
 		{
 			// Hashes and returns on success
-			if ( $encrypt = dechex( crc32( $name ) ) )
-				return $encrypt;
-			else
-				return false;
+			$encrypt = dechex( crc32( $name ) );
+			return $encrypt;
 		}
 
 		/**
