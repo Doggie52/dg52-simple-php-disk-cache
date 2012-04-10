@@ -73,11 +73,11 @@
 			// Check for existance of directory, tries to create if non-existant
 			if ( !is_dir( self::$cacheDir ) )
 				if ( !mkdir( self::$cacheDir, 0755 ) )
-					throw new CacheException( 'Directory does not exist and could not be created!' );
+					throw new CacheException( "Directory {$self::$cacheDir} does not exist and could not be created!" );
 
 			// Checks if directory is writeable
 			if ( !is_writeable( self::$cacheDir ) )
-				throw new CacheException( 'Directory is not writeable!' );
+				throw new CacheException( "Directory {$self::$cacheDir} is not writeable!" );
 
 			// Checks whether an expiration time has been set
 			if ( !isset( self::$expirationTime ) )
@@ -94,7 +94,7 @@
 		 */
 		public final function __clone()
 		{
-			throw new BadMethodCallException( "Cloning is not allowed" );
+			throw new BadMethodCallException( 'Cloning is not allowed!' );
 		}
 
 		/**
@@ -107,7 +107,7 @@
 		 */
 		public final function __wakeup()
 		{
-			throw new BadMethodCallException( "Unserializing is not allowed" );
+			throw new BadMethodCallException( 'Unserializing is not allowed!' );
 		}
 
 		/**
@@ -202,8 +202,8 @@
 			$path = $this->path( $name );
 
 			// Write file contents to variable
-			if ( !( $contents = file_get_contents( $path ) ) )
-				return false;
+			if ( ( $contents = file_get_contents( $path ) ) === false )
+				throw new CacheException( 'Variable could not be retrieved from file!' );
 
 			$contents = trim( $contents );
 			return unserialize( base64_decode( $contents ) );
@@ -310,7 +310,7 @@
 				return false;
 
 			if ( !( $cachestat = stat( $path ) ) )
-				throw new CacheException( 'Last modification time for "' . $name . '" could not be parsed!' );
+				throw new CacheException( "Last modification time for \"{$name}\" could not be parsed!" );
 
 			// If current time is between last modification time and last modification time plus expiration time, it has not expired
 			if (
