@@ -11,7 +11,7 @@
 	 */
 
 	// Display errors if any occur
-	ini_set('display_errors', 1); 
+	ini_set('display_errors', 1);
 	error_reporting(E_ALL);
 
 	include( 'class.DiskCache.php' );
@@ -19,7 +19,7 @@
 	// Instantiate cache class
 	$cache = DiskCache::getInstance();
 	DiskCache::$expirationTime = 5;
-	
+
 	$cache->foo = "foo!";
 	$cache->bar = "bar!";
 	$cache->{'test test'} = "lol!";
@@ -29,4 +29,6 @@
 	var_dump( $cache->bar );
 	var_dump( $cache->{'test test'} );
 	var_dump( $cache->array );
+
+	echo $cache->prune() . " entries were pruned!";
 ?>
