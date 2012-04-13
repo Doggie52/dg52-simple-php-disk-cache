@@ -43,6 +43,13 @@
 		public static $expirationTime;
 
 		/**
+		 * The amount of cached variables that have been served.
+		 *
+		 * @var int $cacheHits
+		 */
+		public $cacheHits = 0;
+
+		/**
 		 * __construct()
 		 *
 		 * @access private
@@ -196,6 +203,9 @@
 			// Write file contents to variable
 			if ( ( $contents = file_get_contents( $path ) ) === false )
 				throw new CacheException( 'Variable could not be retrieved from file!' );
+
+			// Increment hits-counter
+			$this->cacheHits++;
 
 			$contents = trim( $contents );
 			return unserialize( base64_decode( $contents ) );
