@@ -30,5 +30,6 @@
 	var_dump( $cache->{'test test'} );
 	var_dump( $cache->array );
 
-	echo $cache->prune() . " entries were pruned!";
+	echo $cache->prune() . " entries were pruned, ";
+	echo $cache->cacheHits . " entries were hit.";
 ?>
