@@ -43,22 +43,14 @@
 		public static $expirationTime;
 
 		/**
-		 * __autoload()
-		 *
-		 * @param string $class_name
-		 */
-		function __autoload( $class_name )
-		{
-			include( 'class.' . $class_name . '.php' );
-		}
-
-		/**
-		 * __construct
+		 * __construct()
 		 *
 		 * @access private
 		 */
 		private function __construct()
 		{
+			// Grabs the CacheException class
+			include( 'class.CacheException.php' );
 			// Checks if directory is set
 			if ( empty( self::$cacheDir ) )
 				self::$cacheDir = 'cache/';
@@ -73,11 +65,11 @@
 			// Check for existance of directory, tries to create if non-existant
 			if ( !is_dir( self::$cacheDir ) )
 				if ( !mkdir( self::$cacheDir, 0755 ) )
-					throw new CacheException( "Directory {$self::$cacheDir} does not exist and could not be created!" );
+					throw new CacheException( "Directory {self::$cacheDir} does not exist and could not be created!" );
 
 			// Checks if directory is writeable
 			if ( !is_writeable( self::$cacheDir ) )
-				throw new CacheException( "Directory {$self::$cacheDir} is not writeable!" );
+				throw new CacheException( "Directory {self::$cacheDir} is not writeable!" );
 
 			// Checks whether an expiration time has been set
 			if ( !isset( self::$expirationTime ) )
@@ -85,9 +77,9 @@
 		}
 
 		/**
-		 * __clone
+		 * __clone()
 		 *
-		 * Prevents cloning.
+		 * @abstract Prevents cloning.
 		 *
 		 * @access public
 		 * @final
@@ -98,9 +90,9 @@
 		}
 
 		/**
-		 * __wakeup
+		 * __wakeup()
 		 *
-		 * Prevents unserializing.
+		 * @abstract Prevents unserializing.
 		 *
 		 * @access public
 		 * @final
@@ -111,9 +103,9 @@
 		}
 
 		/**
-		 * getInstance
+		 * getInstance()
 		 *
-		 * Enfores the Singleton pattern, returns the one and only instance of itself, stored in itself.
+		 * @abstract Enfores the Singleton pattern, returns the one and only instance of itself, stored in itself.
 		 *
 		 * @static
 		 * @access public
@@ -129,9 +121,9 @@
 		}
 
 		/**
-		 * store
+		 * store()
 		 *
-		 * Stores an entry in the caching filesystem and returns whether it was successfully done or not.
+		 * @abstract Stores an entry in the caching filesystem and returns whether it was successfully done or not.
 		 *
 		 * @param mixed $name
 		 * @param mixed $value
@@ -164,7 +156,7 @@
 		}
 
 		/**
-		 * __set
+		 * __set()
 		 *
 		 *
 		 * @param mixed $name
@@ -177,9 +169,9 @@
 		}
 
 		/**
-		 * get
+		 * get()
 		 *
-		 * Fetches an entry in the caching filesystem, returning either the contents or FALSE if there was nothing found.
+		 * @abstract Fetches an entry in the caching filesystem, returning either the contents or FALSE if there was nothing found.
 		 *
 		 * @param mixed $name
 		 * @access public
@@ -210,7 +202,7 @@
 		}
 
 		/**
-		 * __get
+		 * __get()
 		 *
 		 *
 		 * @param mixed $name
@@ -222,7 +214,54 @@
 		}
 
 		/**
-		 * checkSet
+		 * prune()
+		 *
+		 * @abstract Prunes the existing cache files, looking for old enough cache to delete.
+		 *
+		 * @todo Allow the amount of files to check per prune to be set by the user.
+		 *
+		 * @return int $count The number of files that were pruned.
+		 */
+		public function prune()
+		{
+			// Initiate filename array
+			if ( ( $filenames = scandir( self::$cacheDir ) ) === false )
+				throw new CacheException( 'Cache directory could not be scanned for pruning!' );
+
+			$count = 0;
+
+			// Main pruning loop
+			foreach ( $filenames as $filename )
+			{
+				// The two first $filenames are current and parent directory, let's ignore those
+				if ( $filename[0] == '.' )
+					continue;
+
+				$path = self::$cacheDir . $filename;
+				if ( !( $cachestat = stat( $path ) ) )
+					throw new CacheException( "Last modification time for file \"{$filename}\" could not be parsed!" );
+
+				// If current time is between last modification time and last modification time plus expiration time, it has not expired
+				if (
+						$cachestat['mtime'] <= time()
+						&&
+						time() < ( $cachestat['mtime'] + self::$expirationTime )
+				)
+					continue;
+				else
+				{
+					if ( !unlink( $path ) )
+						throw new CacheException( 'Cache file could not be deleted!' );
+					else
+						$count++;
+				}
+			}
+
+			return $count;
+		}
+
+		/**
+		 * checkSet()
 		 *
 		 * @param mixed $name
 		 * @access public
@@ -247,7 +286,7 @@
 		}
 
 		/**
-		 * __isset
+		 * __isset()
 		 *
 		 * @param mixed $name
 		 * @access public
@@ -258,7 +297,7 @@
 		}
 
 		/**
-		 * delete
+		 * delete()
 		 *
 		 * @param mixed $name
 		 * @access public
@@ -279,7 +318,7 @@
 		}
 
 		/**
-		 * __unset
+		 * __unset()
 		 *
 		 * @param mixed $name
 		 * @access public
@@ -290,9 +329,9 @@
 		}
 
 		/**
-		 * hasExpired
+		 * hasExpired()
 		 *
-		 * Checks whether a certain cached variable has expired or not.
+		 * @abstract Checks whether a certain cached variable or file has expired or not.
 		 *
 		 * @param string $name
 		 * @access private
@@ -325,9 +364,9 @@
 
 
 		/**
-		 * encrpytName
+		 * encrpytName()
 		 *
-		 * Takes an input and turns it into a hash. Used to name the files in the caching filesystem.
+		 * @abstract Takes an input and turns it into a hash. Used to name the files in the caching filesystem.
 		 *
 		 * @param string $name
 		 * @access private
@@ -341,9 +380,9 @@
 		}
 
 		/**
-		 * standardizeName
+		 * standardizeName()
 		 *
-		 * Takes an input and standardizes it, to avoid confusing duplicates.
+		 * @abstract Takes an input and standardizes it, to avoid confusing duplicates.
 		 * Note that yes, this function is sometimes run twice on strings -- this is not a problem as it will then just return the same string.
 		 *
 		 * @param string $name
@@ -360,9 +399,10 @@
 		}
 
 		/**
-		 * path
+		 * path()
 		 *
-		 * Takes an input and returns the path to the cached variable with that $name.
+		 * @abstract Takes an input and returns the path to the cached variable with that $name.
+		 * If $type is NAME_FILE, the name is not encrypted again.
 		 *
 		 * @param string $name
 		 * @access private
