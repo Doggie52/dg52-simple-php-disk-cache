@@ -58,6 +58,7 @@
 		{
 			// Grabs the CacheException class
 			include( 'class.CacheException.php' );
+			
 			// Checks if directory is set
 			if ( empty( self::$cacheDir ) )
 				self::$cacheDir = 'cache/';
@@ -182,7 +183,7 @@
 		 *
 		 * @param mixed $name
 		 * @access public
-		 * @return $contents Contents of the cached variable, false on failure.
+		 * @return mixed Contents of the cached variable, false on failure.
 		 */
 		public function get( $name )
 		{
@@ -380,7 +381,7 @@
 		 *
 		 * @param string $name
 		 * @access private
-		 * @return string $encrypt The hashed $name.
+		 * @return string The hashed $name.
 		 */
 		private function encryptName( $name )
 		{
@@ -397,7 +398,7 @@
 		 *
 		 * @param string $name
 		 * @access private
-		 * @return string $name The standardized $name.
+		 * @return string The standardized $name.
 		 */
 		private function standardizeName( $name )
 		{
@@ -416,7 +417,7 @@
 		 *
 		 * @param string $name
 		 * @access private
-		 * @return string $path The path to the cached variable.
+		 * @return string The path to the cached variable.
 		 */
 		private function path( $name )
 		{
