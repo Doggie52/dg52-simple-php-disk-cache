@@ -3,9 +3,9 @@
 	/**
 	 * dG52 PHP Simple Disk Caching class
 	 *
-	 * @author: Douglas Stridsberg
-	 * @email: doggie52@gmail.com
-	 * @url: www.douglasstridsberg.com
+	 * @author Douglas Stridsberg
+	 * @email doggie52@gmail.com
+	 * @url www.douglasstridsberg.com
 	 *
 	 * Main class file. Heavily inspired by http://xcache.lighttpd.net/wiki/XcacheApi#aSimpleOOwrapper.
 	 *
